@@ -23,6 +23,7 @@ import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.exceptions.InvalidImageException;
 import com.itextpdf.text.exceptions.InvalidPdfException;
 import com.itextpdf.text.pdf.PRIndirectReference;
+import com.itextpdf.text.pdf.PdfArray;
 import com.itextpdf.text.pdf.PdfDictionary;
 import com.itextpdf.text.pdf.PdfName;
 import com.itextpdf.text.pdf.PdfReader;
@@ -39,7 +40,9 @@ import pl.edu.icm.cermine.structure.model.BxBounds;
 import pl.edu.icm.cermine.structure.model.BxChunk;
 import pl.edu.icm.cermine.structure.model.BxDocument;
 import pl.edu.icm.cermine.structure.model.BxImage;
+import pl.edu.icm.cermine.structure.model.BxLine;
 import pl.edu.icm.cermine.structure.model.BxPage;
+import pl.edu.icm.cermine.structure.model.BxZone;
 import pl.edu.icm.cermine.structure.tools.BxBoundsBuilder;
 import pl.edu.icm.cermine.tools.timeout.TimeoutRegister;
 
@@ -80,6 +83,12 @@ public class ITextCharacterExtractor implements CharacterExtractor {
         ALT_TO_STANDART_FONTS.put("TimesNewRoman,Italic",     PdfName.TIMES_ITALIC);
     }
 
+    ///static void PdfDocument()
+    //{
+    //    iTextSharp.text.io.StreamUtil.AddToResourceSearch("iTextAsian.dll");    
+    //    iTextSharp.text.io.StreamUtil.AddToResourceSearch("iTextAsianCmaps.dll");
+    //}
+
     /**
      * Extracts text chunks from PDF using iText and stores them in BxDocument object.
      * Depending on parsed PDF, extracted text chunks may or may not be individual glyphs,
@@ -92,6 +101,7 @@ public class ITextCharacterExtractor implements CharacterExtractor {
     @Override
     public BxDocument extractCharacters(InputStream stream) throws AnalysisException {
         try {
+            //  ここがPDFから最初に文字を抜き出して，BxDocumentを返す部分のコード
             BxDocumentCreator documentCreator = new BxDocumentCreator();
 
             PdfReader reader = new PdfReader(stream);
@@ -103,9 +113,11 @@ public class ITextCharacterExtractor implements CharacterExtractor {
                     continue;
                 }
                 documentCreator.processNewBxPage(reader.getPageSize(pageNumber));
-
+                // resources には Font と ProcSet しか入ってない
                 PdfDictionary resources = reader.getPageN(pageNumber).getAsDict(PdfName.RESOURCES);
-                processAlternativeFontNames(resources);
+                //PdfArray fields = resources.getAsArray(PdfName.FIELDS);
+                //System.out.println(fields.getAsDict(0));
+                //processAlternativeFontNames(resources);
                 processAlternativeColorSpace(resources);
 
                 processor.reset();
@@ -113,7 +125,15 @@ public class ITextCharacterExtractor implements CharacterExtractor {
                 TimeoutRegister.get().check();
             }
 
-            BxDocument doc = filterComponents(removeDuplicateChunks(documentCreator.document));
+            //下の時点ではBxPages にはテキストは入っておらず，BxChunkの中にのみ存在 (しかもアルファベットのみ=>日本語ITextで解決)
+            //BxDocument doc = documentCreator.document;//これやっても１ページ目に日本語ないのは同じ
+            
+            BxDocument doc = filterComponents(removeDuplicateChunks(documentCreator.document));//ここでは１ページ目に日本語が入ってる
+
+            //for (BxZone zone: doc.asZones()){//asZones はなんか表示されない
+            //   System.out.println("ITextCharacterExtracter L122");
+            //    System.out.println(zone.toText());
+            //}
             if (doc.getFirstChild() == null) {
                 throw new AnalysisException("Document contains no pages");
             }
@@ -159,7 +179,7 @@ public class ITextCharacterExtractor implements CharacterExtractor {
             PdfName baseFont = fontDictionary.getAsName(PdfName.BASEFONT);
             if (baseFont != null) {
                 String fontName = PdfName.decodeName(baseFont.toString());
-                if (fontDictionary.getAsArray(PdfName.WIDTHS) == null && ALT_TO_STANDART_FONTS.containsKey(fontName)) {
+                if (fontDictionary.getAsArray(PdfName.WIDTHS) == null &&  ALT_TO_STANDART_FONTS.containsKey(fontName)) {
                     fontDictionary.put(PdfName.BASEFONT, ALT_TO_STANDART_FONTS.get(fontName));
                 }
             }
@@ -228,8 +248,12 @@ public class ITextCharacterExtractor implements CharacterExtractor {
             List<BxChunk> chunks = Lists.newArrayList(page.getChunks());
             for (BxChunk ch : chunks) {
                 bounds.expand(ch.getBounds());
+                //ここでもうアルファベットしか表示されない
+                //System.out.println("filterComponents ITextCHaracterExtractor L241");
+                //System.out.println(ch.toText());
             }
-                    
+
+            //なんのDensity?? => bounds 中におけるchunkの占める割合        
             double density = (double)100.0*chunks.size() / (bounds.getBounds().getWidth()*bounds.getBounds().getHeight());
             if (Double.isNaN(density) || density < CHUNK_DENSITY_LIMIT) {
                 continue;

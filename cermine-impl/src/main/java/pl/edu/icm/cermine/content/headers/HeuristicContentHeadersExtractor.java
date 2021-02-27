@@ -66,6 +66,7 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
                         fontPopulation.addObservation(getFontIndex(line));
                         
                         if (isFirstInZone(line) && looksLikeHeader(line)) {
+                            boolean a = looksLikeHeader(line);
                             candidates.add(line);
                         }
                         TimeoutRegister.get().check();
@@ -78,10 +79,10 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
         
         for (BxLine line : candidates){
             if (shouldBeRemoved(line, heightPopulation, fontPopulation, distancePopulation, indentationPopulation)) {
-                toDelete.add(line);
+                //toDelete.add(line);
             }
             if (lengthPopulation.getZScore(line.getWidth()) > CAND_MAX_LENGTH_ZSCORE) {
-                toDelete.add(line);
+                //toDelete.add(line);
             }
         }
         
@@ -121,10 +122,10 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
         
         for (BxLine line : candidates){
             if (shouldBeRemoved(line, heightPopulation, fontPopulation, distancePopulation, indentationPopulation)) {
-                toDelete.add(line);
+                //toDelete.add(line);
             }
             if (lengthPopulation.getZScore(line.getWidth()) > CAND_MAX_LENGTH_ZSCORE_2) {
-                toDelete.add(line);
+                //toDelete.add(line);
             }
         }
  
@@ -220,7 +221,7 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
 
     private boolean looksLikeHeader(BxLine line) {
         String text = line.toText();
-        return text.matches("^[A-Z].*") || text.matches("^[1-9].*[a-zA-Z].*") || text.matches("^[a-h]\\).*[a-zA-Z].*");
+        return text.matches("^[A-Z].*[亜-熙ぁ-んァ-ヶ].*") || text.matches("^[1-9].*[a-zA-Z亜-熙ぁ-んァ-ヶ]*") || text.matches("^[a-h]\\).*[a-zA-Z亜-熙ぁ-んァ-ヶ].*");
     }
 
     private boolean looksLikeEquation(BxLine line) {
@@ -247,7 +248,7 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
     }
     
     private boolean containsWord(BxLine line) {
-        return line.toText().toLowerCase(Locale.ENGLISH).matches(".*[a-z][a-z][a-z][a-z].*");
+        return line.toText().toLowerCase(Locale.ENGLISH).matches(".*[a-z亜-熙ぁ-んァ-ヶ][a-z亜-熙ぁ-んァ-ヶ][a-z亜-熙ぁ-んァ-ヶ][a-z亜-熙ぁ-んァ-ヶ].*");
     }
     
     private boolean startsWithLargeNumber(BxLine line) {

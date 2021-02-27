@@ -49,7 +49,7 @@ public class DocstrumSegmenter implements DocumentSegmenter {
         computeDocumentOrientation(document);
         BxDocument output = new BxDocument();
         for (BxPage page: document) {
-        	BxPage segmentedPage = segmentPage(page);
+            BxPage segmentedPage = segmentPage(page);
         	if (segmentedPage.getBounds() != null) {
         		output.addPage(segmentedPage);
         	}
@@ -83,10 +83,11 @@ public class DocstrumSegmenter implements DocumentSegmenter {
         if (Double.isNaN(orientation)) {
             orientation = computeInitialOrientation(components);
         }
+        // ２段組が一段に認識される論文はしたの値が大きめ、(character 10, line 13 くらい <=> character 9 line 12) だが、これが原因ではなさそう
         double characterSpacing = computeCharacterSpacing(components, orientation);
         double lineSpacing = computeLineSpacing(components, orientation);
 
-        List<ComponentLine> lines = determineLines(components, orientation,
+        List<ComponentLine> lines = determineLines(components, orientation,//ここではほぼLINE は決まっておらず、ほぼ全ての文字がLINEとして認識されている。
                 characterSpacing * COMP_DIST_CHAR,
                 lineSpacing * MAX_VERTICAL_COMP_DIST);
     
@@ -111,10 +112,15 @@ public class DocstrumSegmenter implements DocumentSegmenter {
                 lineSpacing * MIN_VERTICAL_DIST, lineSpacing * MAX_VERTICAL_DIST,
                 characterSpacing * MIN_HORIZONTAL_MERGE_DIST, 0.0,
                 0.0, lineSpacing * MAX_VERTICAL_MERGE_DIST);
-        zones = mergeZones(zones, characterSpacing * 0.5);
-        zones = mergeLines(zones, orientation,
-                Double.NEGATIVE_INFINITY, 0.0,
-                0.0, lineSpacing * MAX_VERTICAL_MERGE_DIST);
+        zones = mergeZones(zones, characterSpacing * 0.5);//ここまでの reading order は合ってる
+        //zones = mergeLines(zones, orientation,//ここが原因なのは間違いない
+        //9*0.5,  0.0,
+        //        -10.0, 12 * 0.1);//ここ!!!!
+
+        zones = mergeLines(zones, orientation,//ここが原因なのは間違いない
+              Double.NEGATIVE_INFINITY, 0.0,
+        0.0, lineSpacing * MAX_VERTICAL_MERGE_DIST);//ここ!!!!
+        // zones にはまだ日本語が入ってる．
         return convertToBxModel(page, zones, WORD_DIST_MULT * characterSpacing);
     }
 
@@ -985,7 +991,7 @@ public class DocstrumSegmenter implements DocumentSegmenter {
      * lineSpacing and characterSpacing are estimated between-line and
      * within-line spacing, respectively.
      */
-    private static final double COMP_DIST_CHAR = 3.5;
+    private static final double COMP_DIST_CHAR = 3.5;//これも２段組問題に聞いてくるぽい、JSAIの論文はこれを0.5とかに小さくすると1段組で認識されてしまう。
 
     /**
      * Word distance multiplier.
@@ -993,7 +999,7 @@ public class DocstrumSegmenter implements DocumentSegmenter {
      * Maximum distance between components that belong to the same word is
      * equal to the product of this value and estimated within-line spacing.
      */
-    private static final double WORD_DIST_MULT = 0.2;
+    private static final double WORD_DIST_MULT = 0.2;//0.001
 
     /**
      * Minimum horizontal line merge distance multiplier.

@@ -112,8 +112,10 @@ public class SVMInitialZoneClassifier extends SVMZoneClassifier {
     @Override
     public BxDocument classifyZones(BxDocument document) throws AnalysisException {
         for (BxZone zone : document.asZones()) {
+            //System.out.println(zone.toText());
             if (zone.getLabel() == null) {
                 BxZoneLabel predicted = predictLabel(zone, zone.getParent());
+                
                 zone.setLabel(predicted);
                 TimeoutRegister.get().check();
             }

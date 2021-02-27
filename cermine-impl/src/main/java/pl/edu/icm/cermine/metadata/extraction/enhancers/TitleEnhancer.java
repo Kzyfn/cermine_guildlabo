@@ -58,7 +58,8 @@ public class TitleEnhancer extends AbstractSimpleEnhancer {
             "short paper",
             "study", 
             "study protocol",
-            "technical note"
+            "technical note",
+            "先行研究"
             );
     
     @Override

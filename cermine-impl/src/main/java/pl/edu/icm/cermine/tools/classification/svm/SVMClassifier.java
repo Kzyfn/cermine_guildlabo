@@ -121,7 +121,10 @@ public abstract class SVMClassifier<S, T, E extends Enum<E>> {
 	public E predictLabel(S object, T context) {
 		svm_node[] instance = buildDatasetForClassification(object, context);
 		TimeoutRegister.get().check(); //12s-70s
-		int predictedVal = (int)svm.svm_predict(model, instance);
+		int predictedVal = (int)svm.svm_predict(model, instance);//ここが問題
+        if (predictedVal == 0){
+            predictedVal = 1;
+        }
 		TimeoutRegister.get().check();
 		return enumClassObj.getEnumConstants()[predictedVal];
 	}

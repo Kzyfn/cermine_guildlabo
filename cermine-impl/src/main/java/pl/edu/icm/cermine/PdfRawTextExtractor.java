@@ -111,7 +111,7 @@ public class PdfRawTextExtractor {
                 PdfRawTextExtractor extractor = new PdfRawTextExtractor();
                 InputStream in = new FileInputStream(file);
                 String result = extractor.extractText(in);
-                System.out.println(result);
+                //System.out.println(result);
             } catch (AnalysisException ex) {
                 ex.printStackTrace();
             }

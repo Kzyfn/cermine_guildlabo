@@ -57,7 +57,9 @@ public class ExtractionUtils {
     public static BxDocument extractCharacters(ComponentConfiguration conf, InputStream stream) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        BxDocument doc = conf.getCharacterExtractor().extractCharacters(stream);
+        BxDocument doc = conf.getCharacterExtractor().extractCharacters(stream);// これで doc => <BxPage> => <BxChunk> にテキストと座標がはいる
+        System.out.println("1.1 Character extraction 　ExtractionUtil L61");
+        //System.out.println(doc.toText());
         debug(start, "1.1 Character extraction");
         return doc;
     }
@@ -67,7 +69,12 @@ public class ExtractionUtils {
             throws AnalysisException {
         long start = System.currentTimeMillis();
         TimeoutRegister.get().check();
-        doc = conf.getDocumentSegmenter().segmentDocument(doc);
+        // DocstrumSegmenter L48
+        // 
+        doc = conf.getDocumentSegmenter().segmentDocument(doc);//ここで <BxChunk> から <BxWord>, <BxLine>, <BxZone> を生成している，まだ１ページ目の日本語は存在
+        //この時点で2段組が1段に認識されている。
+        System.out.println("1.2 Page segmentation　ExtractionUtil L73");//２段組の２段がつながってしまうのはここが原因ぽい
+        //System.out.println(doc.toText());//ここでtoText()が動くようになる and まだ日本語が残ってる
         debug(start, "1.2 Page segmentation");
         return doc;
     }
@@ -76,7 +83,9 @@ public class ExtractionUtils {
     public static BxDocument resolveReadingOrder(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        doc = conf.getReadingOrderResolver().resolve(doc);
+        doc = conf.getReadingOrderResolver().resolve(doc);//BxZoneの順序が変わってる？？日本語はまだある．
+        System.out.println("1.3 Reading order resolving　ExtractionUtil L84");
+        //System.out.println(doc.toText());//日本語残ってる
         debug(start, "1.3 Reading order resolving");
         return doc;
     }
@@ -85,7 +94,8 @@ public class ExtractionUtils {
     public static BxDocument classifyInitially(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        doc = conf.getInitialClassifier().classifyZones(doc);
+        doc = conf.getInitialClassifier().classifyZones(doc);//ここでも１ページ目日本語ある
+        System.out.println("1.4 Initial classification　ExtractionUtil L95");
         debug(start, "1.4 Initial classification");
         return doc;
     }
@@ -94,7 +104,8 @@ public class ExtractionUtils {
     public static BxDocument classifyMetadata(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        doc = conf.getMetadataClassifier().classifyZones(doc);
+        doc = conf.getMetadataClassifier().classifyZones(doc);//ここでも１ページ目日本語あるが，BIB_INFO, GEN_OTHER, CORRESPONDENCEってラベルがついてる
+        System.out.println("2.1 Metadata classification ExtractionUtil L105");
         debug(start, "2.1 Metadata classification");
         return doc;
     }
@@ -103,7 +114,10 @@ public class ExtractionUtils {
     public static DocumentMetadata cleanMetadata(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        DocumentMetadata metadata = conf.getMetadataExtractor().extractMetadata(doc);
+        //EnhancedMetadataEXtractor L97
+        //ここが原因ぽい
+        DocumentMetadata metadata = conf.getMetadataExtractor().extractMetadata(doc);//ここも１ページ目日本語ある
+        System.out.println("2.1 Metadata cleaning ExtractionUtil L115");
         debug(start, "2.2 Metadata cleaning");
         return metadata;
     }
@@ -113,8 +127,9 @@ public class ExtractionUtils {
             throws AnalysisException {
         long start = System.currentTimeMillis();
     	for (DocumentAffiliation aff : metadata.getAffiliations()) {
-            conf.getAffiliationParser().parse(aff);
-    	}
+            conf.getAffiliationParser().parse(aff);//ここで日本語がくなってる
+        }
+        System.out.println("2.3 Affiliation parsing ExtractionUtil L127");
         debug(start, "2.3 Affiliation parsing");
         return metadata;
     }
@@ -125,6 +140,7 @@ public class ExtractionUtils {
         long start = System.currentTimeMillis();
         String[] refs = conf.getBibRefExtractor().extractBibReferences(doc);
         List<String> references = Lists.newArrayList(refs);
+        System.out.println("3.1 Reference extraction ExtractionUtil L138");//ここもdocの１ページ目日本語ある
         debug(start, "3.1 Reference extraction");
         return references;
     }
@@ -137,6 +153,7 @@ public class ExtractionUtils {
         for (String ref : refs) {
             parsedRefs.add(conf.getBibRefParser().parseBibReference(ref));
         }
+        System.out.println("3.2 Reference parsing ExtractionUtil L151");
         debug(start, "3.2 Reference parsing");
         return parsedRefs;
     }
@@ -146,6 +163,7 @@ public class ExtractionUtils {
             throws AnalysisException {
         long start = System.currentTimeMillis();
         doc = conf.getContentFilter().filter(doc);
+        System.out.println("4.1 Content filtering ExtractionUtil L161");//ここも１ページ目日本語ある
         debug(start, "4.1 Content filtering");
         return doc;
     }
@@ -154,16 +172,19 @@ public class ExtractionUtils {
     public static BxContentStructure extractHeaders(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        BxContentStructure contentStructure = conf.getContentHeaderExtractor().extractHeaders(doc);
+        //extractHeaders は HeuristicContentHeadersExtractor.java
+        BxContentStructure contentStructure = conf.getContentHeaderExtractor().extractHeaders(doc);//ここで章のタイトルが出てる，日本語論文だと出てこない
+        System.out.println("4.2 Headers extraction ExtractionUtil L171");//ここも１ページ目日本語ある
         debug(start, "4.2 Headers extraction");
         return contentStructure;
     }
     
     //4.3 Headers clustering
-    public static BxContentStructure clusterHeaders(ComponentConfiguration conf, BxContentStructure contentStructure) 
+    public static BxContentStructure clusterHeaders(ComponentConfiguration conf, BxContentStructure contentStructure) //このcontentStructure に１ページ目の日本語が入ってない
             throws AnalysisException {
         long start = System.currentTimeMillis();
         conf.getContentHeaderClusterizer().clusterHeaders(contentStructure);
+        System.out.println("4.3 Headers clustering ExtractionUtil L181");
         debug(start, "4.3 Headers clustering");
         return contentStructure;
     }
@@ -176,6 +197,8 @@ public class ExtractionUtils {
             conf.getContentCleaner().cleanupContent(contentStructure);
             BxContentToDocContentConverter converter = new BxContentToDocContentConverter();
             ContentStructure structure = converter.convert(contentStructure);
+            System.out.println("4.4 Content cleaning ExtractionUtil L194");
+
             debug(start, "4.4 Content cleaning");
             return structure;
         } catch (TransformationException ex) {
@@ -188,6 +211,7 @@ public class ExtractionUtils {
             ContentStructure struct, List<BibEntry> citations) {
         long start = System.currentTimeMillis();
         ContentStructureCitationPositions positions = conf.getCitationPositionFinder().findReferences(struct, citations);
+        System.out.println("4.5 Citation positions finding ExtractionUtil L207");
         debug(start, "4.5 Citation positions finding");
         return positions;
     }

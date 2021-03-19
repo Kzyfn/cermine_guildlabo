@@ -66,7 +66,6 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
                         fontPopulation.addObservation(getFontIndex(line));
                         
                         if (isFirstInZone(line) && looksLikeHeader(line)) {
-                            boolean a = looksLikeHeader(line);
                             candidates.add(line);
                         }
                         TimeoutRegister.get().check();
@@ -82,7 +81,7 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
                 //toDelete.add(line);
             }
             if (lengthPopulation.getZScore(line.getWidth()) > CAND_MAX_LENGTH_ZSCORE) {
-                //toDelete.add(line);
+                toDelete.add(line);
             }
         }
         
@@ -125,7 +124,7 @@ public class HeuristicContentHeadersExtractor implements ContentHeadersExtractor
                 //toDelete.add(line);
             }
             if (lengthPopulation.getZScore(line.getWidth()) > CAND_MAX_LENGTH_ZSCORE_2) {
-                //toDelete.add(line);
+                toDelete.add(line);
             }
         }
  

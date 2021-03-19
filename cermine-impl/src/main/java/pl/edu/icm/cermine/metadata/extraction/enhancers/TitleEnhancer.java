@@ -59,7 +59,16 @@ public class TitleEnhancer extends AbstractSimpleEnhancer {
             "study", 
             "study protocol",
             "technical note",
-            "先行研究"
+            "先行研究",
+            "序論",
+            "はじめに",
+            "終わりに",
+            "考察",
+            "結論",
+            "関連研究",
+            "実験",
+            "参考文献",
+            "謝辞"
             );
     
     @Override

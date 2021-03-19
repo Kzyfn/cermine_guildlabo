@@ -37,7 +37,7 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
 
     static final int GRIDSIZE = 50;
     static final double BOXES_FLOW = 0.5;
-    static final double EPS = 0.01;
+    static final double EPS = 0.005;
     static final int MAX_ZONES = 1000;
     static final Comparator<BxObject> Y_ASCENDING_ORDER = new Comparator<BxObject>() {
 
@@ -59,7 +59,7 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
 
         @Override
         public int compare(BxObject o1, BxObject o2) {
-            int yCompare = Y_ASCENDING_ORDER.compare(o1, o2);
+            int yCompare = Y_ASCENDING_ORDER.compare(o1, o2);//y座標の差がEPS以下ならTrue、以上ならFalse
             return yCompare == 0 ? X_ASCENDING_ORDER.compare(o1, o2) : yCompare;
         }
     };
@@ -84,9 +84,8 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
                     line.resetText();
                     line.setWords(words);
                 }
-                Collections.sort(lines, YX_ASCENDING_ORDER);
                 zone.resetText();
-                zone.setLines(lines);
+                zone.setLines(lines);//ここまでは順番正常
             }
             List<BxZone> orderedZones;
             if (zones.size() > MAX_ZONES) {
@@ -94,8 +93,10 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
                 Collections.sort(orderedZones, YX_ASCENDING_ORDER);
             } else {
                 orderedZones = reorderZones(zones);
+                //orderedZones = new ArrayList<BxZone>(zones);
+                //Collections.sort(orderedZones, YX_ASCENDING_ORDER);
             }
-            page.setZones(orderedZones);
+            page.setZones(orderedZones);//ここではもう順番がおかしくなってる。
             page.resetText();
             orderedDoc.addPage(page);
             TimeoutRegister.get().check();
@@ -200,7 +201,7 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
                 BxZone zone2 = zones.get(idx2);
                 dists.add(new DistElem<BxObject>(false, distance(zone1, zone2),
                         zone1, zone2));
-            }
+            }//DistElem は普通にこの4つをプロパティとして持ってるだけ
         }
         Collections.sort(dists);
         TimeoutRegister.get().check();
@@ -208,14 +209,14 @@ public class HierarchicalReadingOrderResolver implements ReadingOrderResolver {
         while (!dists.isEmpty()) {
             DistElem<BxObject> distElem = dists.get(0);
             dists.remove(0);
-            if (!distElem.isC() && plane.anyObjectsBetween(distElem.getObj1(), distElem.getObj2())) {
+            if (!distElem.isC() && plane.anyObjectsBetween(distElem.getObj1(), distElem.getObj2())) {//isC とは？
                 dists.add(new DistElem<BxObject>(true, distElem.getDist(), distElem.getObj1(), distElem.getObj2()));
                 continue;
             }
             TimeoutRegister.get().check();
             BxZoneGroup newGroup = new BxZoneGroup(distElem.getObj1(), distElem.getObj2());
             plane.remove(distElem.getObj1()).remove(distElem.getObj2());
-            dists = removeDistElementsContainingObject(dists, distElem.getObj1());
+            dists = removeDistElementsContainingObject(dists, distElem.getObj1());//removeDistElementsContainingObject distsからobj1 を取り除く
             dists = removeDistElementsContainingObject(dists, distElem.getObj2());
             for (BxObject other : plane.getObjects()) {
                 dists.add(new DistElem<BxObject>(false, distance(other,

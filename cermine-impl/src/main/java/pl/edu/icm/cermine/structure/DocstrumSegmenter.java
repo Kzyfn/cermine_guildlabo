@@ -84,12 +84,12 @@ public class DocstrumSegmenter implements DocumentSegmenter {
             orientation = computeInitialOrientation(components);
         }
         // ２段組が一段に認識される論文はしたの値が大きめ、(character 10, line 13 くらい <=> character 9 line 12) だが、これが原因ではなさそう
-        double characterSpacing = computeCharacterSpacing(components, orientation);
-        double lineSpacing = computeLineSpacing(components, orientation);
+        double characterSpacing = 7;//computeCharacterSpacing(components, orientation);
+        double lineSpacing = 10;//computeLineSpacing(components, orientation);
 
         List<ComponentLine> lines = determineLines(components, orientation,//ここではほぼLINE は決まっておらず、ほぼ全ての文字がLINEとして認識されている。
-                characterSpacing * COMP_DIST_CHAR,
-                lineSpacing * MAX_VERTICAL_COMP_DIST);
+                characterSpacing * COMP_DIST_CHAR,//maxHorizontalDistance
+                lineSpacing * MAX_VERTICAL_COMP_DIST);//maxVerticalDistance
     
         if (Math.abs(orientation) > ORIENTATION_MARGIN) {
             List<ComponentLine> linesZero = determineLines(components, 0,
@@ -112,11 +112,7 @@ public class DocstrumSegmenter implements DocumentSegmenter {
                 lineSpacing * MIN_VERTICAL_DIST, lineSpacing * MAX_VERTICAL_DIST,
                 characterSpacing * MIN_HORIZONTAL_MERGE_DIST, 0.0,
                 0.0, lineSpacing * MAX_VERTICAL_MERGE_DIST);
-        zones = mergeZones(zones, characterSpacing * 0.5);//ここまでの reading order は合ってる
-        //zones = mergeLines(zones, orientation,//ここが原因なのは間違いない
-        //9*0.5,  0.0,
-        //        -10.0, 12 * 0.1);//ここ!!!!
-
+        zones = mergeZones(zones, characterSpacing * 0.5);
         zones = mergeLines(zones, orientation,//ここが原因なのは間違いない
               Double.NEGATIVE_INFINITY, 0.0,
         0.0, lineSpacing * MAX_VERTICAL_MERGE_DIST);//ここ!!!!
@@ -1019,7 +1015,7 @@ public class DocstrumSegmenter implements DocumentSegmenter {
      * to the product of this value and estimated between-line spacing.
      */
 
-    private static final double MAX_VERTICAL_MERGE_DIST = 0.5;
+    private static final double MAX_VERTICAL_MERGE_DIST = 0.2;//0.3 //default 0.5
     
     /**
      * Angle tolerance for comparisons of angles between components and angles

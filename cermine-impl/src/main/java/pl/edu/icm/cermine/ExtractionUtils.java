@@ -74,7 +74,7 @@ public class ExtractionUtils {
         doc = conf.getDocumentSegmenter().segmentDocument(doc);//ここで <BxChunk> から <BxWord>, <BxLine>, <BxZone> を生成している，まだ１ページ目の日本語は存在
         //この時点で2段組が1段に認識されている。
         System.out.println("1.2 Page segmentation　ExtractionUtil L73");//２段組の２段がつながってしまうのはここが原因ぽい
-        //System.out.println(doc.toText());//ここでtoText()が動くようになる and まだ日本語が残ってる
+        //System.out.println(doc.toText());//ここでtoText()が動くようになる and まだ日本語が残ってる and 消えた文章もまだある
         debug(start, "1.2 Page segmentation");
         return doc;
     }
@@ -83,9 +83,10 @@ public class ExtractionUtils {
     public static BxDocument resolveReadingOrder(ComponentConfiguration conf, BxDocument doc) 
             throws AnalysisException {
         long start = System.currentTimeMillis();
-        doc = conf.getReadingOrderResolver().resolve(doc);//BxZoneの順序が変わってる？？日本語はまだある．
+        doc = conf.getReadingOrderResolver().resolve(doc);//BxZoneの順序が変わってる？？
+        //HierarchicalReadingOrderResolver L68．
         System.out.println("1.3 Reading order resolving　ExtractionUtil L84");
-        //System.out.println(doc.toText());//日本語残ってる
+        //System.out.println(doc.toText());//消えている文章が存在、順番ごちゃ
         debug(start, "1.3 Reading order resolving");
         return doc;
     }
@@ -95,8 +96,9 @@ public class ExtractionUtils {
             throws AnalysisException {
         long start = System.currentTimeMillis();
         doc = conf.getInitialClassifier().classifyZones(doc);//ここでも１ページ目日本語ある
-        System.out.println("1.4 Initial classification　ExtractionUtil L95");
+        //System.out.println("1.4 Initial classification　ExtractionUtil L95");
         debug(start, "1.4 Initial classification");
+        //System.out.println(doc.toText());//ここで順番ごちゃごちゃ
         return doc;
     }
     
@@ -165,6 +167,7 @@ public class ExtractionUtils {
         doc = conf.getContentFilter().filter(doc);
         System.out.println("4.1 Content filtering ExtractionUtil L161");//ここも１ページ目日本語ある
         debug(start, "4.1 Content filtering");
+        //System.out.println(doc.toText());//ここでも消えてる文章ある、既に順番はごちゃごちゃ
         return doc;
     }
     
